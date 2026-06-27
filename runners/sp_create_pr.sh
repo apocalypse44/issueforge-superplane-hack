@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # SuperPlane runnerBash: create GitHub PR
 set -euo pipefail
-APP_ROOT="${APP_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
-WORKDIR="${WORKDIR:-/tmp/issueforge/$RANDOM}"
 source "$(dirname "$0")/sp_common.sh"
+APP_ROOT="${APP_ROOT:-$(resolve_app_root "$0")}"
+export APP_ROOT
+WORKDIR="${WORKDIR:-/tmp/issueforge/$RANDOM}"
 
 ISSUE_NUM=$(result_field "Fetch Issue" issue_number)
 ISSUE_URL=$(result_field "Fetch Issue" issue_url)
@@ -28,5 +29,6 @@ DEPLOY_JSON=$(jq -c --arg n "Deploy" '
 ' "$SUPERPLANE_PAYLOAD_FILE")
 echo "$DEPLOY_JSON" > "$WORKDIR/deploy_result.json"
 
-RESULT=$(python3 "$APP_ROOT/scripts/superplane_stages.py" pr "$WORKDIR" "$WORKDIR/spec.json" "$WORKDIR/issue.json" "$WORKDIR/deploy_result.json" "$ATTEMPTS")
+STAGES="$(stages_py_path "$APP_ROOT")"
+RESULT=$(python3 "$STAGES" pr "$WORKDIR" "$WORKDIR/spec.json" "$WORKDIR/issue.json" "$WORKDIR/deploy_result.json" "$ATTEMPTS")
 echo "$RESULT" > "$SUPERPLANE_RESULT_FILE"

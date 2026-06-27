@@ -36,18 +36,32 @@ spec:
         script: |-
           #!/usr/bin/env bash
           set -euo pipefail
+          TARGET=sp_fetch_issue.sh
           FILES_REPO="${FILES_REPO:-apocalypse44/issueforge-superplane-hack}"
-          APP_ROOT="${APP_ROOT:-/tmp/sp-issueforge}"
-          if [ ! -f "$APP_ROOT/runners/sp_canvas_entry.sh" ]; then
-            rm -rf "$APP_ROOT"
+          ROOT="${APP_ROOT:-.}"
+          if [ ! -f "$ROOT/sp_canvas_entry.sh" ] && [ ! -f "$ROOT/runners/sp_canvas_entry.sh" ] && [ ! -f "$ROOT/runners/$TARGET" ] && [ ! -f "$ROOT/$TARGET" ]; then
+            ROOT="/tmp/sp-issueforge"
+            rm -rf "$ROOT"
             if [ -n "${GITHUB_TOKEN:-}" ]; then
-              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$APP_ROOT"
+              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$ROOT"
             else
-              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$APP_ROOT"
+              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$ROOT"
             fi
           fi
-          export APP_ROOT FILES_REPO
-          bash "$APP_ROOT/runners/sp_canvas_entry.sh" sp_fetch_issue.sh
+          export APP_ROOT="$ROOT" FILES_REPO
+          if [ -f "$ROOT/runners/sp_canvas_entry.sh" ]; then
+            bash "$ROOT/runners/sp_canvas_entry.sh" "$TARGET"
+          elif [ -f "$ROOT/sp_canvas_entry.sh" ]; then
+            bash "$ROOT/sp_canvas_entry.sh" "$TARGET"
+          elif [ -f "$ROOT/runners/$TARGET" ]; then
+            bash "$ROOT/runners/$TARGET"
+          elif [ -f "$ROOT/$TARGET" ]; then
+            bash "$ROOT/$TARGET"
+          else
+            echo "ERROR: $TARGET not found under $ROOT"
+            ls -la "$ROOT" "$ROOT/runners" 2>/dev/null || true
+            exit 1
+          fi
         environment_variables:
           - key: GITHUB_TOKEN
             value: REPLACE_GITHUB_TOKEN
@@ -101,18 +115,32 @@ spec:
         script: |-
           #!/usr/bin/env bash
           set -euo pipefail
+          TARGET=sp_spec_agent.sh
           FILES_REPO="${FILES_REPO:-apocalypse44/issueforge-superplane-hack}"
-          APP_ROOT="${APP_ROOT:-/tmp/sp-issueforge}"
-          if [ ! -f "$APP_ROOT/runners/sp_canvas_entry.sh" ]; then
-            rm -rf "$APP_ROOT"
+          ROOT="${APP_ROOT:-.}"
+          if [ ! -f "$ROOT/sp_canvas_entry.sh" ] && [ ! -f "$ROOT/runners/sp_canvas_entry.sh" ] && [ ! -f "$ROOT/runners/$TARGET" ] && [ ! -f "$ROOT/$TARGET" ]; then
+            ROOT="/tmp/sp-issueforge"
+            rm -rf "$ROOT"
             if [ -n "${GITHUB_TOKEN:-}" ]; then
-              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$APP_ROOT"
+              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$ROOT"
             else
-              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$APP_ROOT"
+              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$ROOT"
             fi
           fi
-          export APP_ROOT FILES_REPO
-          bash "$APP_ROOT/runners/sp_canvas_entry.sh" sp_spec_agent.sh
+          export APP_ROOT="$ROOT" FILES_REPO
+          if [ -f "$ROOT/runners/sp_canvas_entry.sh" ]; then
+            bash "$ROOT/runners/sp_canvas_entry.sh" "$TARGET"
+          elif [ -f "$ROOT/sp_canvas_entry.sh" ]; then
+            bash "$ROOT/sp_canvas_entry.sh" "$TARGET"
+          elif [ -f "$ROOT/runners/$TARGET" ]; then
+            bash "$ROOT/runners/$TARGET"
+          elif [ -f "$ROOT/$TARGET" ]; then
+            bash "$ROOT/$TARGET"
+          else
+            echo "ERROR: $TARGET not found under $ROOT"
+            ls -la "$ROOT" "$ROOT/runners" 2>/dev/null || true
+            exit 1
+          fi
         environment_variables:
           - key: GROQ_API_KEY
             value: REPLACE_GROQ_API_KEY
@@ -140,18 +168,32 @@ spec:
         script: |-
           #!/usr/bin/env bash
           set -euo pipefail
+          TARGET=sp_validate_spec.sh
           FILES_REPO="${FILES_REPO:-apocalypse44/issueforge-superplane-hack}"
-          APP_ROOT="${APP_ROOT:-/tmp/sp-issueforge}"
-          if [ ! -f "$APP_ROOT/runners/sp_canvas_entry.sh" ]; then
-            rm -rf "$APP_ROOT"
+          ROOT="${APP_ROOT:-.}"
+          if [ ! -f "$ROOT/sp_canvas_entry.sh" ] && [ ! -f "$ROOT/runners/sp_canvas_entry.sh" ] && [ ! -f "$ROOT/runners/$TARGET" ] && [ ! -f "$ROOT/$TARGET" ]; then
+            ROOT="/tmp/sp-issueforge"
+            rm -rf "$ROOT"
             if [ -n "${GITHUB_TOKEN:-}" ]; then
-              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$APP_ROOT"
+              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$ROOT"
             else
-              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$APP_ROOT"
+              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$ROOT"
             fi
           fi
-          export APP_ROOT FILES_REPO
-          bash "$APP_ROOT/runners/sp_canvas_entry.sh" sp_validate_spec.sh
+          export APP_ROOT="$ROOT" FILES_REPO
+          if [ -f "$ROOT/runners/sp_canvas_entry.sh" ]; then
+            bash "$ROOT/runners/sp_canvas_entry.sh" "$TARGET"
+          elif [ -f "$ROOT/sp_canvas_entry.sh" ]; then
+            bash "$ROOT/sp_canvas_entry.sh" "$TARGET"
+          elif [ -f "$ROOT/runners/$TARGET" ]; then
+            bash "$ROOT/runners/$TARGET"
+          elif [ -f "$ROOT/$TARGET" ]; then
+            bash "$ROOT/$TARGET"
+          else
+            echo "ERROR: $TARGET not found under $ROOT"
+            ls -la "$ROOT" "$ROOT/runners" 2>/dev/null || true
+            exit 1
+          fi
         environment_variables:
           - key: FILES_REPO
             value: '{{ "apocalypse44/issueforge-superplane-hack" }}'
@@ -197,18 +239,32 @@ spec:
         script: |-
           #!/usr/bin/env bash
           set -euo pipefail
+          TARGET=sp_code_agent.sh
           FILES_REPO="${FILES_REPO:-apocalypse44/issueforge-superplane-hack}"
-          APP_ROOT="${APP_ROOT:-/tmp/sp-issueforge}"
-          if [ ! -f "$APP_ROOT/runners/sp_canvas_entry.sh" ]; then
-            rm -rf "$APP_ROOT"
+          ROOT="${APP_ROOT:-.}"
+          if [ ! -f "$ROOT/sp_canvas_entry.sh" ] && [ ! -f "$ROOT/runners/sp_canvas_entry.sh" ] && [ ! -f "$ROOT/runners/$TARGET" ] && [ ! -f "$ROOT/$TARGET" ]; then
+            ROOT="/tmp/sp-issueforge"
+            rm -rf "$ROOT"
             if [ -n "${GITHUB_TOKEN:-}" ]; then
-              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$APP_ROOT"
+              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$ROOT"
             else
-              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$APP_ROOT"
+              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$ROOT"
             fi
           fi
-          export APP_ROOT FILES_REPO
-          bash "$APP_ROOT/runners/sp_canvas_entry.sh" sp_code_agent.sh
+          export APP_ROOT="$ROOT" FILES_REPO
+          if [ -f "$ROOT/runners/sp_canvas_entry.sh" ]; then
+            bash "$ROOT/runners/sp_canvas_entry.sh" "$TARGET"
+          elif [ -f "$ROOT/sp_canvas_entry.sh" ]; then
+            bash "$ROOT/sp_canvas_entry.sh" "$TARGET"
+          elif [ -f "$ROOT/runners/$TARGET" ]; then
+            bash "$ROOT/runners/$TARGET"
+          elif [ -f "$ROOT/$TARGET" ]; then
+            bash "$ROOT/$TARGET"
+          else
+            echo "ERROR: $TARGET not found under $ROOT"
+            ls -la "$ROOT" "$ROOT/runners" 2>/dev/null || true
+            exit 1
+          fi
         environment_variables:
           - key: GROQ_API_KEY
             value: REPLACE_GROQ_API_KEY
@@ -236,18 +292,32 @@ spec:
         script: |-
           #!/usr/bin/env bash
           set -euo pipefail
+          TARGET=sp_verify.sh
           FILES_REPO="${FILES_REPO:-apocalypse44/issueforge-superplane-hack}"
-          APP_ROOT="${APP_ROOT:-/tmp/sp-issueforge}"
-          if [ ! -f "$APP_ROOT/runners/sp_canvas_entry.sh" ]; then
-            rm -rf "$APP_ROOT"
+          ROOT="${APP_ROOT:-.}"
+          if [ ! -f "$ROOT/sp_canvas_entry.sh" ] && [ ! -f "$ROOT/runners/sp_canvas_entry.sh" ] && [ ! -f "$ROOT/runners/$TARGET" ] && [ ! -f "$ROOT/$TARGET" ]; then
+            ROOT="/tmp/sp-issueforge"
+            rm -rf "$ROOT"
             if [ -n "${GITHUB_TOKEN:-}" ]; then
-              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$APP_ROOT"
+              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$ROOT"
             else
-              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$APP_ROOT"
+              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$ROOT"
             fi
           fi
-          export APP_ROOT FILES_REPO
-          bash "$APP_ROOT/runners/sp_canvas_entry.sh" sp_verify.sh
+          export APP_ROOT="$ROOT" FILES_REPO
+          if [ -f "$ROOT/runners/sp_canvas_entry.sh" ]; then
+            bash "$ROOT/runners/sp_canvas_entry.sh" "$TARGET"
+          elif [ -f "$ROOT/sp_canvas_entry.sh" ]; then
+            bash "$ROOT/sp_canvas_entry.sh" "$TARGET"
+          elif [ -f "$ROOT/runners/$TARGET" ]; then
+            bash "$ROOT/runners/$TARGET"
+          elif [ -f "$ROOT/$TARGET" ]; then
+            bash "$ROOT/$TARGET"
+          else
+            echo "ERROR: $TARGET not found under $ROOT"
+            ls -la "$ROOT" "$ROOT/runners" 2>/dev/null || true
+            exit 1
+          fi
         environment_variables:
           - key: FILES_REPO
             value: '{{ "apocalypse44/issueforge-superplane-hack" }}'
@@ -290,18 +360,32 @@ spec:
         script: |-
           #!/usr/bin/env bash
           set -euo pipefail
+          TARGET=sp_deploy.sh
           FILES_REPO="${FILES_REPO:-apocalypse44/issueforge-superplane-hack}"
-          APP_ROOT="${APP_ROOT:-/tmp/sp-issueforge}"
-          if [ ! -f "$APP_ROOT/runners/sp_canvas_entry.sh" ]; then
-            rm -rf "$APP_ROOT"
+          ROOT="${APP_ROOT:-.}"
+          if [ ! -f "$ROOT/sp_canvas_entry.sh" ] && [ ! -f "$ROOT/runners/sp_canvas_entry.sh" ] && [ ! -f "$ROOT/runners/$TARGET" ] && [ ! -f "$ROOT/$TARGET" ]; then
+            ROOT="/tmp/sp-issueforge"
+            rm -rf "$ROOT"
             if [ -n "${GITHUB_TOKEN:-}" ]; then
-              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$APP_ROOT"
+              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$ROOT"
             else
-              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$APP_ROOT"
+              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$ROOT"
             fi
           fi
-          export APP_ROOT FILES_REPO
-          bash "$APP_ROOT/runners/sp_canvas_entry.sh" sp_deploy.sh
+          export APP_ROOT="$ROOT" FILES_REPO
+          if [ -f "$ROOT/runners/sp_canvas_entry.sh" ]; then
+            bash "$ROOT/runners/sp_canvas_entry.sh" "$TARGET"
+          elif [ -f "$ROOT/sp_canvas_entry.sh" ]; then
+            bash "$ROOT/sp_canvas_entry.sh" "$TARGET"
+          elif [ -f "$ROOT/runners/$TARGET" ]; then
+            bash "$ROOT/runners/$TARGET"
+          elif [ -f "$ROOT/$TARGET" ]; then
+            bash "$ROOT/$TARGET"
+          else
+            echo "ERROR: $TARGET not found under $ROOT"
+            ls -la "$ROOT" "$ROOT/runners" 2>/dev/null || true
+            exit 1
+          fi
         environment_variables:
           - key: GITHUB_TOKEN
             value: REPLACE_GITHUB_TOKEN
@@ -350,18 +434,32 @@ spec:
         script: |-
           #!/usr/bin/env bash
           set -euo pipefail
+          TARGET=sp_create_pr.sh
           FILES_REPO="${FILES_REPO:-apocalypse44/issueforge-superplane-hack}"
-          APP_ROOT="${APP_ROOT:-/tmp/sp-issueforge}"
-          if [ ! -f "$APP_ROOT/runners/sp_canvas_entry.sh" ]; then
-            rm -rf "$APP_ROOT"
+          ROOT="${APP_ROOT:-.}"
+          if [ ! -f "$ROOT/sp_canvas_entry.sh" ] && [ ! -f "$ROOT/runners/sp_canvas_entry.sh" ] && [ ! -f "$ROOT/runners/$TARGET" ] && [ ! -f "$ROOT/$TARGET" ]; then
+            ROOT="/tmp/sp-issueforge"
+            rm -rf "$ROOT"
             if [ -n "${GITHUB_TOKEN:-}" ]; then
-              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$APP_ROOT"
+              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$ROOT"
             else
-              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$APP_ROOT"
+              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$ROOT"
             fi
           fi
-          export APP_ROOT FILES_REPO
-          bash "$APP_ROOT/runners/sp_canvas_entry.sh" sp_create_pr.sh
+          export APP_ROOT="$ROOT" FILES_REPO
+          if [ -f "$ROOT/runners/sp_canvas_entry.sh" ]; then
+            bash "$ROOT/runners/sp_canvas_entry.sh" "$TARGET"
+          elif [ -f "$ROOT/sp_canvas_entry.sh" ]; then
+            bash "$ROOT/sp_canvas_entry.sh" "$TARGET"
+          elif [ -f "$ROOT/runners/$TARGET" ]; then
+            bash "$ROOT/runners/$TARGET"
+          elif [ -f "$ROOT/$TARGET" ]; then
+            bash "$ROOT/$TARGET"
+          else
+            echo "ERROR: $TARGET not found under $ROOT"
+            ls -la "$ROOT" "$ROOT/runners" 2>/dev/null || true
+            exit 1
+          fi
         environment_variables:
           - key: GITHUB_TOKEN
             value: REPLACE_GITHUB_TOKEN

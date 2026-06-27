@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # SuperPlane runnerBash: Code Agent via Groq API
 set -euo pipefail
-APP_ROOT="${APP_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+source "$(dirname "$0")/sp_common.sh"
+APP_ROOT="${APP_ROOT:-$(resolve_app_root "$0")}"
+export APP_ROOT
 WORKDIR="${WORKDIR:-/tmp/issueforge/$RANDOM}"
 mkdir -p "$WORKDIR"
-source "$(dirname "$0")/sp_common.sh"
 
 SPEC_TEXT=$(llm_text "Spec Agent")
 if [ -z "$SPEC_TEXT" ]; then
@@ -13,5 +14,6 @@ if [ -z "$SPEC_TEXT" ]; then
 fi
 
 echo "$SPEC_TEXT" > "$WORKDIR/spec_raw.txt"
-RESULT=$(python3 "$APP_ROOT/scripts/superplane_stages.py" code "$WORKDIR" "$WORKDIR/spec_raw.txt")
+STAGES="$(stages_py_path "$APP_ROOT")"
+RESULT=$(python3 "$STAGES" code "$WORKDIR" "$WORKDIR/spec_raw.txt")
 echo "$RESULT" > "$SUPERPLANE_RESULT_FILE"

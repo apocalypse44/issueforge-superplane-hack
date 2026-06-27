@@ -39,3 +39,27 @@ llm_text() {
 claude_text() {
   llm_text "$1"
 }
+
+# App root: scripts live at Files root (flat) or legacy runners/ subfolder
+resolve_app_root() {
+  if [ -n "${APP_ROOT:-}" ] && [ -f "${APP_ROOT}/sp_common.sh" ]; then
+    echo "$APP_ROOT"
+    return
+  fi
+  local dir
+  dir="$(cd "$(dirname "$1")" && pwd)"
+  if [ -f "$dir/sp_common.sh" ]; then
+    echo "$dir"
+  else
+    echo "$(cd "$dir/.." && pwd)"
+  fi
+}
+
+stages_py_path() {
+  local root="$1"
+  if [ -f "$root/superplane_stages.py" ]; then
+    echo "$root/superplane_stages.py"
+  else
+    echo "$root/scripts/superplane_stages.py"
+  fi
+}

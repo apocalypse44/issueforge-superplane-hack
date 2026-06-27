@@ -13,9 +13,19 @@ import json
 import os
 import sys
 
-ROOT = os.path.join(os.path.dirname(__file__), "..")
+ROOT = os.path.dirname(os.path.abspath(__file__))
+if os.path.basename(ROOT) == "scripts":
+    ROOT = os.path.dirname(ROOT)
 sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
+
+
+def _prompt_path(name: str) -> str:
+    flat = os.path.join(ROOT, name)
+    nested = os.path.join(ROOT, "prompts", name)
+    if os.path.isfile(flat):
+        return flat
+    return nested
 
 from run_local import (  # noqa: E402
     load_env,
@@ -29,6 +39,7 @@ from run_local import (  # noqa: E402
     parse_issue_url,
     github_api,
     _valid_github_token,
+    call_llm,
 )
 
 
@@ -63,6 +74,29 @@ def cmd_fetch(issue_url, workdir):
         "branch_name": f"issueforge/{info['number']}",
         "idea_file": f"{workdir}/idea.txt",
     }
+
+
+def cmd_spec_agent(workdir, issue_text_file):
+    prompt_path = _prompt_path("spec_agent.md")
+    with open(prompt_path) as f:
+        system_prompt = f.read()
+    with open(issue_text_file) as f:
+        user_message = f.read()
+    text = call_llm(system_prompt, user_message, max_tokens=3000)
+    model = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+    return {"text": text, "model": model, "provider": os.environ.get("LLM_PROVIDER", "groq")}
+
+
+def cmd_code_agent(workdir, spec_text_file):
+    prompt_path = _prompt_path("code_agent.md")
+    with open(prompt_path) as f:
+        system_prompt = f.read()
+    with open(spec_text_file) as f:
+        spec_text = f.read()
+    user_message = f"Implement as a deployable React+Vite PoC.\n\n{spec_text}"
+    text = call_llm(system_prompt, user_message, max_tokens=8000)
+    model = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+    return {"text": text, "model": model, "provider": os.environ.get("LLM_PROVIDER", "groq")}
 
 
 def cmd_validate(workdir, spec_text_file):
@@ -117,6 +151,10 @@ def main():
         print(json.dumps(cmd_fetch(sys.argv[2], sys.argv[3]), indent=2))
     elif stage == "validate":
         print(json.dumps(cmd_validate(sys.argv[2], sys.argv[3]), indent=2))
+    elif stage == "spec":
+        print(json.dumps(cmd_spec_agent(sys.argv[2], sys.argv[3]), indent=2))
+    elif stage == "code":
+        print(json.dumps(cmd_code_agent(sys.argv[2], sys.argv[3]), indent=2))
     elif stage == "verify":
         print(json.dumps(cmd_verify(sys.argv[2], sys.argv[3], sys.argv[4]), indent=2))
     elif stage == "deploy":
