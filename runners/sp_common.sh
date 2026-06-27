@@ -24,11 +24,18 @@ result_field() {
   ' "$SUPERPLANE_PAYLOAD_FILE"
 }
 
-claude_text() {
+# LLM output from claude.textPrompt (data.text) or Groq runner (data.result.text)
+llm_text() {
   local node="$1"
   jq -r --arg n "$node" '
     (.[$n].data.text?) //
     (.[$n].data[0].text?) //
+    (.[$n].data.result.text?) //
+    (.[$n].data[0].result.text?) //
     empty
   ' "$SUPERPLANE_PAYLOAD_FILE"
+}
+
+claude_text() {
+  llm_text "$1"
 }

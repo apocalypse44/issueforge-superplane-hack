@@ -15,11 +15,11 @@ spec:
           - node: fetch-issue
             description: Load GitHub issue title and body
           - node: spec-agent
-            description: Claude generates implementation spec
+            description: Groq generates implementation spec
           - node: validate-spec
             description: Validate spec JSON schema
           - node: code-agent
-            description: Claude generates PoC file changes
+            description: Groq generates PoC file changes
           - node: verify-build
             description: npm install and build
           - node: deploy-render

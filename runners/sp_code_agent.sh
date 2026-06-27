@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SuperPlane runnerBash: validate Spec Agent JSON output
+# SuperPlane runnerBash: Code Agent via Groq API
 set -euo pipefail
 APP_ROOT="${APP_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 WORKDIR="${WORKDIR:-/tmp/issueforge/$RANDOM}"
@@ -13,5 +13,5 @@ if [ -z "$SPEC_TEXT" ]; then
 fi
 
 echo "$SPEC_TEXT" > "$WORKDIR/spec_raw.txt"
-RESULT=$(python3 "$APP_ROOT/scripts/superplane_stages.py" validate "$WORKDIR" "$WORKDIR/spec_raw.txt")
+RESULT=$(python3 "$APP_ROOT/scripts/superplane_stages.py" code "$WORKDIR" "$WORKDIR/spec_raw.txt")
 echo "$RESULT" > "$SUPERPLANE_RESULT_FILE"

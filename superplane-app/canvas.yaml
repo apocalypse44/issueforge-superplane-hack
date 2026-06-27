@@ -36,11 +36,23 @@ spec:
         script: |-
           #!/usr/bin/env bash
           set -euo pipefail
-          export APP_ROOT="${APP_ROOT:-.}"
-          bash runners/sp_fetch_issue.sh
+          FILES_REPO="${FILES_REPO:-apocalypse44/issueforge-superplane-hack}"
+          APP_ROOT="${APP_ROOT:-/tmp/sp-issueforge}"
+          if [ ! -f "$APP_ROOT/runners/sp_canvas_entry.sh" ]; then
+            rm -rf "$APP_ROOT"
+            if [ -n "${GITHUB_TOKEN:-}" ]; then
+              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$APP_ROOT"
+            else
+              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$APP_ROOT"
+            fi
+          fi
+          export APP_ROOT FILES_REPO
+          bash "$APP_ROOT/runners/sp_canvas_entry.sh" sp_fetch_issue.sh
         environment_variables:
           - key: GITHUB_TOKEN
             value: REPLACE_GITHUB_TOKEN
+          - key: FILES_REPO
+            value: '{{ "apocalypse44/issueforge-superplane-hack" }}'
       position:
         x: 600
         'y': 0
@@ -78,14 +90,40 @@ spec:
     - id: spec-agent
       name: Spec Agent
       type: TYPE_ACTION
-      component: claude.textPrompt
+      # Claude disabled — Groq via runnerBash (wire OpenAI integration not needed)
+      # component: claude.textPrompt
+      # model: claude-3-5-sonnet-latest
+      component: runnerBash
       configuration:
-        model: claude-3-5-sonnet-latest
-        files:
-          - prompts/spec_agent.md
-        system_message: You are a senior technical product manager. Follow the attached spec agent instructions.
-        prompt: |
-          {{ $['Fetch Issue'].data.result.issue_text }}
+        execution_mode: host
+        execution_timeout_seconds: 300
+        machine_type: e1-tiny-amd64
+        script: |-
+          #!/usr/bin/env bash
+          set -euo pipefail
+          FILES_REPO="${FILES_REPO:-apocalypse44/issueforge-superplane-hack}"
+          APP_ROOT="${APP_ROOT:-/tmp/sp-issueforge}"
+          if [ ! -f "$APP_ROOT/runners/sp_canvas_entry.sh" ]; then
+            rm -rf "$APP_ROOT"
+            if [ -n "${GITHUB_TOKEN:-}" ]; then
+              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$APP_ROOT"
+            else
+              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$APP_ROOT"
+            fi
+          fi
+          export APP_ROOT FILES_REPO
+          bash "$APP_ROOT/runners/sp_canvas_entry.sh" sp_spec_agent.sh
+        environment_variables:
+          - key: GROQ_API_KEY
+            value: REPLACE_GROQ_API_KEY
+          - key: GROQ_MODEL
+            value: '{{ "llama-3.3-70b-versatile" }}'
+          - key: LLM_PROVIDER
+            value: groq
+          - key: FILES_REPO
+            value: '{{ "apocalypse44/issueforge-superplane-hack" }}'
+          - key: GITHUB_TOKEN
+            value: REPLACE_GITHUB_TOKEN
       position:
         x: 1800
         'y': 0
@@ -102,8 +140,23 @@ spec:
         script: |-
           #!/usr/bin/env bash
           set -euo pipefail
-          export APP_ROOT="${APP_ROOT:-.}"
-          bash runners/sp_validate_spec.sh
+          FILES_REPO="${FILES_REPO:-apocalypse44/issueforge-superplane-hack}"
+          APP_ROOT="${APP_ROOT:-/tmp/sp-issueforge}"
+          if [ ! -f "$APP_ROOT/runners/sp_canvas_entry.sh" ]; then
+            rm -rf "$APP_ROOT"
+            if [ -n "${GITHUB_TOKEN:-}" ]; then
+              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$APP_ROOT"
+            else
+              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$APP_ROOT"
+            fi
+          fi
+          export APP_ROOT FILES_REPO
+          bash "$APP_ROOT/runners/sp_canvas_entry.sh" sp_validate_spec.sh
+        environment_variables:
+          - key: FILES_REPO
+            value: '{{ "apocalypse44/issueforge-superplane-hack" }}'
+          - key: GITHUB_TOKEN
+            value: REPLACE_GITHUB_TOKEN
       position:
         x: 2400
         'y': 0
@@ -133,16 +186,40 @@ spec:
     - id: code-agent
       name: Code Agent
       type: TYPE_ACTION
-      component: claude.textPrompt
+      # Claude disabled — Groq via runnerBash
+      # component: claude.textPrompt
+      # model: claude-3-5-sonnet-latest
+      component: runnerBash
       configuration:
-        model: claude-3-5-sonnet-latest
-        files:
-          - prompts/code_agent.md
-        system_message: You are a senior full-stack engineer. Follow the attached code agent instructions. Return ONLY a JSON array of file changes.
-        prompt: |
-          Implement as a deployable React+Vite PoC.
-
-          {{ $['Spec Agent'].data.text }}
+        execution_mode: host
+        execution_timeout_seconds: 600
+        machine_type: e1-tiny-amd64
+        script: |-
+          #!/usr/bin/env bash
+          set -euo pipefail
+          FILES_REPO="${FILES_REPO:-apocalypse44/issueforge-superplane-hack}"
+          APP_ROOT="${APP_ROOT:-/tmp/sp-issueforge}"
+          if [ ! -f "$APP_ROOT/runners/sp_canvas_entry.sh" ]; then
+            rm -rf "$APP_ROOT"
+            if [ -n "${GITHUB_TOKEN:-}" ]; then
+              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$APP_ROOT"
+            else
+              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$APP_ROOT"
+            fi
+          fi
+          export APP_ROOT FILES_REPO
+          bash "$APP_ROOT/runners/sp_canvas_entry.sh" sp_code_agent.sh
+        environment_variables:
+          - key: GROQ_API_KEY
+            value: REPLACE_GROQ_API_KEY
+          - key: GROQ_MODEL
+            value: '{{ "llama-3.3-70b-versatile" }}'
+          - key: LLM_PROVIDER
+            value: groq
+          - key: FILES_REPO
+            value: '{{ "apocalypse44/issueforge-superplane-hack" }}'
+          - key: GITHUB_TOKEN
+            value: REPLACE_GITHUB_TOKEN
       position:
         x: 3000
         'y': 0
@@ -159,8 +236,23 @@ spec:
         script: |-
           #!/usr/bin/env bash
           set -euo pipefail
-          export APP_ROOT="${APP_ROOT:-.}"
-          bash runners/sp_verify.sh
+          FILES_REPO="${FILES_REPO:-apocalypse44/issueforge-superplane-hack}"
+          APP_ROOT="${APP_ROOT:-/tmp/sp-issueforge}"
+          if [ ! -f "$APP_ROOT/runners/sp_canvas_entry.sh" ]; then
+            rm -rf "$APP_ROOT"
+            if [ -n "${GITHUB_TOKEN:-}" ]; then
+              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$APP_ROOT"
+            else
+              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$APP_ROOT"
+            fi
+          fi
+          export APP_ROOT FILES_REPO
+          bash "$APP_ROOT/runners/sp_canvas_entry.sh" sp_verify.sh
+        environment_variables:
+          - key: FILES_REPO
+            value: '{{ "apocalypse44/issueforge-superplane-hack" }}'
+          - key: GITHUB_TOKEN
+            value: REPLACE_GITHUB_TOKEN
       position:
         x: 3600
         'y': 0
@@ -198,8 +290,18 @@ spec:
         script: |-
           #!/usr/bin/env bash
           set -euo pipefail
-          export APP_ROOT="${APP_ROOT:-.}"
-          bash runners/sp_deploy.sh
+          FILES_REPO="${FILES_REPO:-apocalypse44/issueforge-superplane-hack}"
+          APP_ROOT="${APP_ROOT:-/tmp/sp-issueforge}"
+          if [ ! -f "$APP_ROOT/runners/sp_canvas_entry.sh" ]; then
+            rm -rf "$APP_ROOT"
+            if [ -n "${GITHUB_TOKEN:-}" ]; then
+              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$APP_ROOT"
+            else
+              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$APP_ROOT"
+            fi
+          fi
+          export APP_ROOT FILES_REPO
+          bash "$APP_ROOT/runners/sp_canvas_entry.sh" sp_deploy.sh
         environment_variables:
           - key: GITHUB_TOKEN
             value: REPLACE_GITHUB_TOKEN
@@ -209,6 +311,8 @@ spec:
             value: REPLACE_RENDER_API_KEY
           - key: RENDER_SERVICE_ID
             value: REPLACE_RENDER_SERVICE_ID
+          - key: FILES_REPO
+            value: '{{ "apocalypse44/issueforge-superplane-hack" }}'
       position:
         x: 4200
         'y': 0
@@ -246,12 +350,24 @@ spec:
         script: |-
           #!/usr/bin/env bash
           set -euo pipefail
-          export APP_ROOT="${APP_ROOT:-.}"
-          bash runners/sp_create_pr.sh
+          FILES_REPO="${FILES_REPO:-apocalypse44/issueforge-superplane-hack}"
+          APP_ROOT="${APP_ROOT:-/tmp/sp-issueforge}"
+          if [ ! -f "$APP_ROOT/runners/sp_canvas_entry.sh" ]; then
+            rm -rf "$APP_ROOT"
+            if [ -n "${GITHUB_TOKEN:-}" ]; then
+              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${FILES_REPO}.git" "$APP_ROOT"
+            else
+              git clone --depth 1 "https://github.com/${FILES_REPO}.git" "$APP_ROOT"
+            fi
+          fi
+          export APP_ROOT FILES_REPO
+          bash "$APP_ROOT/runners/sp_canvas_entry.sh" sp_create_pr.sh
         environment_variables:
           - key: GITHUB_TOKEN
             value: REPLACE_GITHUB_TOKEN
           - key: OUTPUT_REPO
+            value: '{{ "apocalypse44/issueforge-superplane-hack" }}'
+          - key: FILES_REPO
             value: '{{ "apocalypse44/issueforge-superplane-hack" }}'
       position:
         x: 4800
@@ -295,7 +411,7 @@ spec:
       channel: default
     - sourceId: spec-agent
       targetId: validate-spec
-      channel: default
+      channel: passed
     - sourceId: validate-spec
       targetId: code-agent
       channel: passed
@@ -304,7 +420,7 @@ spec:
       channel: failed
     - sourceId: code-agent
       targetId: verify-build
-      channel: default
+      channel: passed
     - sourceId: verify-build
       targetId: deploy-render
       channel: passed

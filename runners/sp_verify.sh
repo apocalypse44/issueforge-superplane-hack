@@ -6,7 +6,7 @@ WORKDIR="${WORKDIR:-/tmp/issueforge/$RANDOM}"
 mkdir -p "$WORKDIR"
 source "$(dirname "$0")/sp_common.sh"
 
-CODE_TEXT=$(claude_text "Code Agent")
+CODE_TEXT=$(llm_text "Code Agent")
 SPEC_FILE=$(result_field "Validate Spec" spec_file)
 
 if [ -z "$CODE_TEXT" ]; then
