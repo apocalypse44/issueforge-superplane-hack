@@ -23,8 +23,26 @@ BRANCH_NAME="issueforge/${ISSUE_NUMBER}"
 
 cd "$REPO_DIR"
 
+echo "=== Writing .gitignore ==="
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.*.local
+*.log
+npm-debug.log*
+.DS_Store
+coverage/
+.vite/
+.cache/
+EOF
+
 echo "=== Creating branch $BRANCH_NAME ==="
 git checkout -b "$BRANCH_NAME" 2>/dev/null || git checkout "$BRANCH_NAME"
+git rm -r --cached node_modules 2>/dev/null || true
+git rm -r --cached dist 2>/dev/null || true
 git add -A
 git commit -m "feat: implement issue #${ISSUE_NUMBER} [IssueForge]
 

@@ -1,153 +1,201 @@
-# IssueForge — SuperPlane Canvas Workflow
+# IssueForge — SuperPlane Canvas
 #
-# 7-node pipeline:
-# Trigger → Repo Analyzer → Spec Agent → Code Agent → Verifier → Deploy → PR Agent
+# Import via: SuperPlane UI → Files → canvas.yaml, or CLI:
+#   superplane apps canvas update -f superplane-app/canvas.yaml
 #
-# All LLM calls use Groq API (llama-3.3-70b-versatile) via runner scripts.
-# SuperPlane handles orchestration, durable execution, and state.
+# Docs: https://docs.superplane.com/concepts/superplane-apps/
+#       https://docs.superplane.com/concepts/canvas/
+#       https://docs.superplane.com/components/claude/
+#       https://docs.superplane.com/concepts/runners/
 #
-# IMPORTANT: This is a reference config. Adapt node IDs, integration names,
-# and runner references to match your app.superplane.com instance.
+# Replace metadata.id with your app ID after creating the app.
 
-name: issueforge
-description: "Autonomous software factory — GitHub issue to deployed PR"
+apiVersion: v1
+kind: Canvas
+metadata:
+  id: REPLACE_WITH_APP_ID
+  name: IssueForge
+spec:
+  edges:
+    - sourceId: webhook-issue-input
+      targetId: fetch-issue
+      channel: default
+    - sourceId: fetch-issue
+      targetId: spec-agent
+      channel: passed
+    - sourceId: spec-agent
+      targetId: validate-spec
+      channel: default
+    - sourceId: validate-spec
+      targetId: code-agent
+      channel: passed
+    - sourceId: code-agent
+      targetId: verify-build
+      channel: default
+    - sourceId: verify-build
+      targetId: deploy-render
+      channel: passed
+    - sourceId: deploy-render
+      targetId: create-pr
+      channel: passed
 
-nodes:
+  nodes:
+  # 1) Webhook — POST {"issue_url":"https://github.com/superplanehq/superplane/issues/5368"}
+    - id: webhook-issue-input
+      name: Issue Webhook
+      type: TYPE_TRIGGER
+      component: webhook
+      paused: false
+      position: { x: 0, y: 0 }
+      configuration:
+        customName: Issue Webhook
+        # Hackathon: none. Production: bearer or signature (see SUPERPLANE_SETUP.md)
+        authentication: none
 
-  # --- Node 1: Trigger ---
-  - id: trigger
-    name: "Issue Input"
-    type: trigger
-    trigger:
-      type: webhook
-    outputs:
-      - target: repo-analyzer
-    config:
-      payload_schema:
-        issue_url:
-          type: string
-          required: true
-        max_retries:
-          type: number
-          required: false
-          default: 3
+    # 2) Fetch issue title + body from GitHub
+    - id: fetch-issue
+      name: Fetch Issue
+      type: TYPE_ACTION
+      component: runnerBash
+      paused: false
+      position: { x: 480, y: 0 }
+      configuration:
+        customName: Fetch Issue
+        executionMode: docker
+        containerBaseImage: python:3.12-slim
+        setupCommands: |
+          apt-get update -qq && apt-get install -y -qq git jq curl >/dev/null
+          pip install -q groq pytest 2>/dev/null || true
+        script: |
+          #!/usr/bin/env bash
+          set -euo pipefail
+          export APP_ROOT="${APP_ROOT:-.}"
+          bash runners/sp_fetch_issue.sh
+        environmentVariables:
+          - key: GITHUB_TOKEN
+            value: "{{ secrets.GITHUB_TOKEN }}"
 
-  # --- Node 2: Repo Analyzer ---
-  - id: repo-analyzer
-    name: "Repo Analyzer"
-    type: action
-    integration: runner
-    config:
-      script: |
-        # Content of runners/repo_analyzer.sh
-      env:
-        ISSUE_URL: "{{ trigger.payload.issue_url }}"
-        GITHUB_TOKEN: "{{ secrets.GITHUB_TOKEN }}"
-        WORKDIR: "/tmp/issueforge/{{ run.id }}"
-    outputs:
-      - target: spec-agent
-    validation:
-      expression: "execution.exit_code == 0"
+    # 3) Spec Agent — Claude Text Prompt
+    - id: spec-agent
+      name: Spec Agent
+      type: TYPE_ACTION
+      component: claude.textPrompt
+      paused: false
+      position: { x: 960, y: 0 }
+      configuration:
+        customName: Spec Agent
+        model: claude-sonnet-4-20250514
+        systemMessage: |
+          {{ files["prompts/spec_agent.md"] }}
+        prompt: |
+          {{ $['Fetch Issue'].data.result.issue_text }}
 
-  # --- Node 3: Spec Agent (Groq LLM via runner) ---
-  - id: spec-agent
-    name: "Spec Agent"
-    type: action
-    integration: runner
-    config:
-      script: |
-        # Calls Groq API with spec_agent.md prompt + repo context
-        # Outputs spec JSON, validates with validate_spec.py
-      env:
-        GROQ_API_KEY: "{{ secrets.GROQ_API_KEY }}"
-        CONTEXT_FILE: "/tmp/issueforge/{{ run.id }}/context.txt"
-        WORKDIR: "/tmp/issueforge/{{ run.id }}"
-    outputs:
-      - target: code-agent
-        condition: "execution.exit_code == 0"
-    validation:
-      expression: "execution.exit_code == 0"
+    # 4) Validate spec JSON schema
+    - id: validate-spec
+      name: Validate Spec
+      type: TYPE_ACTION
+      component: runnerBash
+      paused: false
+      position: { x: 1440, y: 0 }
+      configuration:
+        customName: Validate Spec
+        executionMode: docker
+        containerBaseImage: python:3.12-slim
+        setupCommands: |
+          apt-get update -qq && apt-get install -y -qq jq >/dev/null
+        script: |
+          #!/usr/bin/env bash
+          set -euo pipefail
+          export APP_ROOT="${APP_ROOT:-.}"
+          bash runners/sp_validate_spec.sh
 
-  # --- Node 4: Code Agent (Groq LLM via runner) ---
-  - id: code-agent
-    name: "Code Agent"
-    type: action
-    integration: runner
-    config:
-      script: |
-        # Calls Groq API with code_agent.md prompt + spec + repo context
-        # Outputs file changes JSON
-      env:
-        GROQ_API_KEY: "{{ secrets.GROQ_API_KEY }}"
-        SPEC_JSON: "/tmp/issueforge/{{ run.id }}/spec.json"
-        CONTEXT_FILE: "/tmp/issueforge/{{ run.id }}/context.txt"
-        WORKDIR: "/tmp/issueforge/{{ run.id }}"
-    outputs:
-      - target: verifier
+    # 5) Code Agent — Claude Text Prompt
+    - id: code-agent
+      name: Code Agent
+      type: TYPE_ACTION
+      component: claude.textPrompt
+      paused: false
+      position: { x: 1920, y: 0 }
+      configuration:
+        customName: Code Agent
+        model: claude-sonnet-4-20250514
+        systemMessage: |
+          {{ files["prompts/code_agent.md"] }}
+        prompt: |
+          Implement as a deployable React+Vite PoC. Return ONLY a JSON array of file changes.
 
-  # --- Node 5: Verifier (with repair loop) ---
-  - id: verifier
-    name: "Verifier"
-    type: action
-    integration: runner
-    config:
-      script: |
-        # Content of runners/verifier.sh
-      env:
-        CHANGES_JSON: "/tmp/issueforge/{{ run.id }}/changes.json"
-        REPO_DIR: "/tmp/issueforge/{{ run.id }}/repo"
-        SPEC_JSON: "/tmp/issueforge/{{ run.id }}/spec.json"
-        CONTEXT_FILE: "/tmp/issueforge/{{ run.id }}/context.txt"
-        GROQ_API_KEY: "{{ secrets.GROQ_API_KEY }}"
-        MAX_RETRIES: "{{ trigger.payload.max_retries | default(3) }}"
-    outputs:
-      - target: deploy
-        condition: "execution.exit_code == 0"
-    validation:
-      expression: "execution.exit_code == 0"
+          {{ $['Spec Agent'].data.text }}
 
-  # --- Node 6: Deploy ---
-  - id: deploy
-    name: "Deploy to Render"
-    type: action
-    integration: runner
-    config:
-      script: |
-        # Content of runners/deploy.sh
-      env:
-        REPO_DIR: "/tmp/issueforge/{{ run.id }}/repo"
-        GITHUB_TOKEN: "{{ secrets.GITHUB_TOKEN }}"
-        REPO_SLUG: "{{ repo-analyzer.output.repo }}"
-        ISSUE_NUMBER: "{{ repo-analyzer.output.issue_number }}"
-        RENDER_API_KEY: "{{ secrets.RENDER_API_KEY }}"
-        RENDER_SERVICE_ID: "{{ secrets.RENDER_SERVICE_ID }}"
-    outputs:
-      - target: pr-agent
-    validation:
-      expression: "execution.exit_code == 0"
+    # 6) Verify — npm install + build
+    - id: verify-build
+      name: Verify Build
+      type: TYPE_ACTION
+      component: runnerBash
+      paused: false
+      position: { x: 2400, y: 0 }
+      configuration:
+        customName: Verify Build
+        executionMode: docker
+        containerBaseImage: node:22-bookworm
+        setupCommands: |
+          apt-get update -qq && apt-get install -y -qq python3 python3-pip jq git >/dev/null
+          pip3 install -q groq pytest --break-system-packages 2>/dev/null || pip3 install -q groq pytest
+        script: |
+          #!/usr/bin/env bash
+          set -euo pipefail
+          export APP_ROOT="${APP_ROOT:-.}"
+          bash runners/sp_verify.sh
+        executionTimeout: 3600
 
-  # --- Node 7: PR Agent ---
-  - id: pr-agent
-    name: "Create PR"
-    type: action
-    integration: runner
-    config:
-      script: |
-        # Content of runners/create_pr.sh
-      env:
-        REPO_SLUG: "{{ repo-analyzer.output.repo }}"
-        ISSUE_NUMBER: "{{ repo-analyzer.output.issue_number }}"
-        BRANCH_NAME: "issueforge/{{ repo-analyzer.output.issue_number }}"
-        SPEC_JSON: "/tmp/issueforge/{{ run.id }}/spec.json"
-        PREVIEW_URL: "{{ deploy.output.preview_url }}"
-        VERIFY_JSON: "/tmp/issueforge/{{ run.id }}/verify_result.json"
-        GITHUB_TOKEN: "{{ secrets.GITHUB_TOKEN }}"
-        WORKDIR: "/tmp/issueforge/{{ run.id }}"
-    validation:
-      expression: "execution.exit_code == 0"
+    # 7) Deploy — push branch + Render
+    - id: deploy-render
+      name: Deploy
+      type: TYPE_ACTION
+      component: runnerBash
+      paused: false
+      position: { x: 2880, y: 0 }
+      configuration:
+        customName: Deploy
+        executionMode: docker
+        containerBaseImage: python:3.12-slim
+        setupCommands: |
+          apt-get update -qq && apt-get install -y -qq git jq curl >/dev/null
+          pip install -q groq pytest 2>/dev/null || true
+        script: |
+          #!/usr/bin/env bash
+          set -euo pipefail
+          export APP_ROOT="${APP_ROOT:-.}"
+          bash runners/sp_deploy.sh
+        environmentVariables:
+          - key: GITHUB_TOKEN
+            value: "{{ secrets.GITHUB_TOKEN }}"
+          - key: OUTPUT_REPO
+            value: "apocalypse44/issueforge-superplane-hack"
+          - key: RENDER_API_KEY
+            value: "{{ secrets.RENDER_API_KEY }}"
+          - key: RENDER_SERVICE_ID
+            value: "{{ secrets.RENDER_SERVICE_ID }}"
 
-secrets:
-  - GROQ_API_KEY
-  - GITHUB_TOKEN
-  - RENDER_API_KEY
-  - RENDER_SERVICE_ID
+    # 8) Create PR
+    - id: create-pr
+      name: Create PR
+      type: TYPE_ACTION
+      component: runnerBash
+      paused: false
+      position: { x: 3360, y: 0 }
+      configuration:
+        customName: Create PR
+        executionMode: docker
+        containerBaseImage: python:3.12-slim
+        setupCommands: |
+          apt-get update -qq && apt-get install -y -qq jq git >/dev/null
+        script: |
+          #!/usr/bin/env bash
+          set -euo pipefail
+          export APP_ROOT="${APP_ROOT:-.}"
+          bash runners/sp_create_pr.sh
+        environmentVariables:
+          - key: GITHUB_TOKEN
+            value: "{{ secrets.GITHUB_TOKEN }}"
+          - key: OUTPUT_REPO
+            value: "apocalypse44/issueforge-superplane-hack"

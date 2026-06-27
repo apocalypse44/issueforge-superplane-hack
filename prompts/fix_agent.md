@@ -12,12 +12,13 @@ Your job is to fix the errors and return corrected file changes.
 2. Trace the error to the specific file and line
 3. Fix ONLY what is broken — do not rewrite working code
 4. Common issues:
+   - **Hallucinated packages** — `mermaid-react` does NOT exist; use `mermaid` instead and call `mermaid.render()` in a useEffect
    - Missing or wrong import paths
    - Missing dependencies in package.json
    - TypeScript type errors
-   - Referencing components or functions that don't exist in the repo
    - Wrong file paths
-   - Syntax errors in JSX/TSX
+   - Syntax errors in JSX/TSX (especially multiline strings — use backticks)
+   - `vite` / `@vitejs/plugin-react` / `typescript` must be in devDependencies
 5. If a dependency is missing from package.json, include a modified package.json
 
 ## Output Format

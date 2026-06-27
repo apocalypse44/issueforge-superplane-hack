@@ -25,17 +25,18 @@ def apply_file_changes(repo_dir: str, changes: list[dict]) -> list[str]:
 def parse_llm_changes(text: str) -> list[dict]:
     try:
         start = text.find("[")
-        end = text.rfind("]") + 1
+        if start != -1:
+            obj, _ = json.JSONDecoder().raw_decode(text[start:])
+            if isinstance(obj, list):
+                return obj
+        start = text.find("{")
+        end = text.rfind("}") + 1
         if start == -1 or end == 0:
-            start = text.find("{")
-            end = text.rfind("}") + 1
-            if start == -1 or end == 0:
-                raise ValueError("No JSON found in LLM output")
-            obj = json.loads(text[start:end])
-            if "changes" in obj:
-                return obj["changes"]
-            return [obj]
-        return json.loads(text[start:end])
+            raise ValueError("No JSON found in LLM output")
+        obj = json.loads(text[start:end])
+        if "changes" in obj:
+            return obj["changes"]
+        return [obj]
     except json.JSONDecodeError as e:
         raise ValueError(f"Failed to parse LLM change output: {e}")
 

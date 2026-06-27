@@ -70,10 +70,16 @@ fi
 # Create PR using gh CLI
 echo "=== Creating PR ==="
 
+BASE_BRANCH=$(curl -s -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+    -H "Accept: application/vnd.github+json" \
+    "https://api.github.com/repos/${REPO_SLUG}" \
+    | python3 -c "import sys,json; print(json.load(sys.stdin).get('default_branch','main'))" 2>/dev/null || echo "main")
+echo "Base branch: $BASE_BRANCH"
+
 PR_URL=$(gh pr create \
     --repo "$REPO_SLUG" \
     --head "$BRANCH_NAME" \
-    --base "main" \
+    --base "$BASE_BRANCH" \
     --title "$TITLE" \
     --body "## IssueForge — Automated Implementation
 
