@@ -42,14 +42,16 @@ claude_text() {
 
 # App root: scripts live at Files root (flat) or legacy runners/ subfolder
 resolve_app_root() {
-  if [ -n "${APP_ROOT:-}" ] && [ -f "${APP_ROOT}/sp_common.sh" ]; then
+  if [ -n "${APP_ROOT:-}" ] && { [ -f "${APP_ROOT}/sp_common.sh" ] || [ -f "${APP_ROOT}/runners/sp_common.sh" ]; }; then
     echo "$APP_ROOT"
     return
   fi
   local dir
   dir="$(cd "$(dirname "$1")" && pwd)"
   if [ -f "$dir/sp_common.sh" ]; then
-    echo "$dir"
+    echo "$(cd "$dir/.." && pwd)"
+  elif [ -f "$dir/../sp_common.sh" ]; then
+    echo "$(cd "$dir/.." && pwd)"
   else
     echo "$(cd "$dir/.." && pwd)"
   fi

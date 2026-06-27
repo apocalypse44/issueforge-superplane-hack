@@ -87,13 +87,44 @@ def call_ollama(system_prompt, user_message, max_tokens=8000, model=None):
         sys.exit(1)
 
 
+def call_groq_http(system_prompt, user_message, max_tokens=8000, model=None):
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key or api_key == "REPLACE_GROQ_API_KEY":
+        print("ERROR: GROQ_API_KEY not set (replace REPLACE_GROQ_API_KEY on Spec/Code Agent nodes)")
+        sys.exit(1)
+    model = model or os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+    payload = json.dumps({
+        "model": model,
+        "max_tokens": max_tokens,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message},
+        ],
+    }).encode()
+    req = urllib.request.Request(
+        "https://api.groq.com/openai/v1/chat/completions",
+        data=payload,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=300) as resp:
+            data = json.loads(resp.read())
+        return data["choices"][0]["message"]["content"]
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode(errors="replace")
+        raise RuntimeError(f"Groq API failed ({e.code}): {detail}") from e
+
+
 def call_groq(system_prompt, user_message, max_tokens=8000, model=None):
     if Groq is None:
-        print("ERROR: groq not installed. Run: pip install groq  (or set LLM_PROVIDER=ollama)")
-        sys.exit(1)
+        return call_groq_http(system_prompt, user_message, max_tokens, model)
     api_key = os.environ.get("GROQ_API_KEY")
-    if not api_key:
-        print("ERROR: GROQ_API_KEY not set. Add it to issueforge/.env or use LLM_PROVIDER=ollama")
+    if not api_key or api_key == "REPLACE_GROQ_API_KEY":
+        print("ERROR: GROQ_API_KEY not set (replace REPLACE_GROQ_API_KEY on Spec/Code Agent nodes)")
         sys.exit(1)
     client = Groq(api_key=api_key)
     model = model or os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
