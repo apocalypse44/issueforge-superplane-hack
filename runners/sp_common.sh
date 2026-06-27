@@ -1,6 +1,8 @@
 # Shared jq helpers for SuperPlane runnerBash scripts.
 # Source: . "$(dirname "$0")/sp_common.sh"
 
+export OUTPUT_REPO="${OUTPUT_REPO:-apocalypse44/issueforge-superplane-hack}"
+
 issue_url_from_payload() {
   jq -r '
     (.["Submit Issue"]? | .data.issue_url?) //

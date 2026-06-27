@@ -3,8 +3,7 @@ kind: Canvas
 metadata:
   id: 4d838984-a5ca-422b-83b1-464ac0727045
   name: IssueForge
-  description: |
-    IssueForge — autonomous software factory. Converts a GitHub issue into a PoC, verified build, Render preview, and pull request.
+  description: ''
 spec:
   nodes:
     - id: trigger-issue
@@ -41,7 +40,7 @@ spec:
           bash runners/sp_fetch_issue.sh
         environment_variables:
           - key: GITHUB_TOKEN
-            value: '{{ secrets.GITHUB_TOKEN }}'
+            value: REPLACE_GITHUB_TOKEN
       position:
         x: 600
         'y': 0
@@ -125,7 +124,7 @@ spec:
           - name: stage
             value: specification_failed
           - name: error
-            value: Spec validation failed
+            value: '{{ "Spec validation failed" }}'
       position:
         x: 3000
         'y': 600
@@ -156,7 +155,7 @@ spec:
       configuration:
         execution_mode: host
         execution_timeout_seconds: 3600
-        machine_type: e1-large-amd64
+        machine_type: aws-standard-1
         script: |-
           #!/usr/bin/env bash
           set -euo pipefail
@@ -182,7 +181,7 @@ spec:
           - name: stage
             value: verify_failed
           - name: error
-            value: npm build verification failed
+            value: '{{ "npm build verification failed" }}'
       position:
         x: 4200
         'y': 600
@@ -203,13 +202,13 @@ spec:
           bash runners/sp_deploy.sh
         environment_variables:
           - key: GITHUB_TOKEN
-            value: '{{ secrets.GITHUB_TOKEN }}'
+            value: REPLACE_GITHUB_TOKEN
           - key: OUTPUT_REPO
-            value: apocalypse44/issueforge-superplane-hack
+            value: '{{ "apocalypse44/issueforge-superplane-hack" }}'
           - key: RENDER_API_KEY
-            value: '{{ secrets.RENDER_API_KEY }}'
+            value: REPLACE_RENDER_API_KEY
           - key: RENDER_SERVICE_ID
-            value: '{{ secrets.RENDER_SERVICE_ID }}'
+            value: REPLACE_RENDER_SERVICE_ID
       position:
         x: 4200
         'y': 0
@@ -230,7 +229,7 @@ spec:
           - name: stage
             value: deployment_failed
           - name: error
-            value: Deploy to GitHub/Render failed
+            value: '{{ "Deploy to GitHub/Render failed" }}'
       position:
         x: 4800
         'y': 600
@@ -251,9 +250,9 @@ spec:
           bash runners/sp_create_pr.sh
         environment_variables:
           - key: GITHUB_TOKEN
-            value: '{{ secrets.GITHUB_TOKEN }}'
+            value: REPLACE_GITHUB_TOKEN
           - key: OUTPUT_REPO
-            value: apocalypse44/issueforge-superplane-hack
+            value: '{{ "apocalypse44/issueforge-superplane-hack" }}'
       position:
         x: 4800
         'y': 0
