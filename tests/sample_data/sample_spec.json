@@ -1,0 +1,47 @@
+{
+  "issue_number": 5368,
+  "title": "Markdown View Mode Rendering",
+  "summary": "Add proper markdown rendering in file view mode including mermaid.js diagrams, node mention chips, and standard markdown elements",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "Mermaid code blocks render as SVG diagrams in view mode",
+      "verification": "test"
+    },
+    {
+      "id": "AC-2",
+      "description": "Node mentions render as styled chips matching agent chat",
+      "verification": "test"
+    },
+    {
+      "id": "AC-3",
+      "description": "Standard markdown (tables, code blocks, images) renders correctly",
+      "verification": "test"
+    },
+    {
+      "id": "AC-4",
+      "description": "Edit mode remains raw text with no rendering",
+      "verification": "test"
+    }
+  ],
+  "likely_files": [
+    "src/components/FileViewer/FileViewer.tsx",
+    "src/components/FileViewer/MarkdownRenderer.tsx"
+  ],
+  "implementation_plan": [
+    "Add mermaid.js dependency and create MermaidBlock component",
+    "Create NodeMentionChip component with same styling as agent chat",
+    "Create MarkdownRenderer using react-markdown with custom renderers",
+    "Integrate MarkdownRenderer into FileViewer for view mode only"
+  ],
+  "test_plan": [
+    "Test mermaid blocks produce SVG output",
+    "Test mention chips render with correct class names",
+    "Test view mode uses MarkdownRenderer",
+    "Test edit mode shows raw text"
+  ],
+  "risks": [
+    "Mermaid.js may have SSR issues",
+    "Agent chat chip styling may not be easily reusable"
+  ]
+}

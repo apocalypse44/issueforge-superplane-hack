@@ -1,0 +1,59 @@
+# IssueForge — SuperPlane Console Dashboard
+
+name: "IssueForge"
+description: "Autonomous software factory dashboard"
+
+panels:
+  - id: run-summary
+    title: "Pipeline Runs"
+    type: table
+    position: { row: 0, col: 0, width: 12 }
+    data_source: runs
+    display:
+      columns:
+        - header: "Issue"
+          value: "{{ run.trigger.payload.issue_url }}"
+        - header: "Spec"
+          value: "{{ run.nodes.spec-agent.status }}"
+        - header: "Code"
+          value: "{{ run.nodes.code-agent.status }}"
+        - header: "Verify"
+          value: "{{ run.nodes.verifier.status }}"
+        - header: "Deploy"
+          value: "{{ run.nodes.deploy.status }}"
+        - header: "PR"
+          value: "{{ run.nodes.pr-agent.status }}"
+        - header: "Result"
+          value: "{{ run.status }}"
+
+  - id: active-run
+    title: "Active Run"
+    type: detail
+    position: { row: 1, col: 0, width: 6 }
+    data_source: runs.latest
+    display:
+      fields:
+        - label: "Issue"
+          value: "{{ run.trigger.payload.issue_url }}"
+        - label: "Stage"
+          value: "{{ run.current_node }}"
+        - label: "Duration"
+          value: "{{ run.duration }}"
+        - label: "Repair Attempts"
+          value: "{{ run.nodes.verifier.output.attempts }}"
+
+  - id: output-links
+    title: "Output"
+    type: detail
+    position: { row: 1, col: 6, width: 6 }
+    data_source: runs.latest
+    display:
+      fields:
+        - label: "PR"
+          value: "{{ run.nodes.pr-agent.output.pr_url }}"
+          type: link
+        - label: "Preview"
+          value: "{{ run.nodes.deploy.output.preview_url }}"
+          type: link
+        - label: "Branch"
+          value: "{{ run.nodes.deploy.output.branch }}"

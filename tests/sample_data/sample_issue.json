@@ -1,0 +1,7 @@
+{
+  "number": 5368,
+  "title": "In view mode markdown files are not rendered properly",
+  "body": "Markdown files should render properly in view mode:\n- Mermaid.js diagrams should render as actual diagrams, not raw code blocks\n- Custom chips for node mentions — same chips as in agent chat\n- General markdown elements: tables, code blocks with syntax highlighting, images\n\nEdit mode can remain raw text. View mode should be a fully rendered preview.",
+  "labels": [],
+  "milestone": "Hackaton"
+}
