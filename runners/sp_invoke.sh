@@ -20,6 +20,9 @@ if ! has_scripts "$ROOT"; then
   fi
 else
   echo "Using cached app files at ${ROOT}"
+  if [ -d "$ROOT/.git" ]; then
+    (cd "$ROOT" && git pull --ff-only) 2>/dev/null || true
+  fi
 fi
 
 export APP_ROOT="$ROOT" FILES_REPO

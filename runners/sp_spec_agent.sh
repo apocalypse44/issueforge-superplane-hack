@@ -8,8 +8,11 @@ export APP_ROOT
 echo "APP_ROOT=$APP_ROOT"
 
 if [ -z "${GROQ_API_KEY:-}" ] || [ "$GROQ_API_KEY" = "REPLACE_GROQ_API_KEY" ]; then
-  echo "ERROR: GROQ_API_KEY not set on Spec Agent node — replace REPLACE_GROQ_API_KEY in canvas env vars"
-  exit 1
+  if [ -z "${OPENROUTER_API_KEY:-}" ] || [ "$OPENROUTER_API_KEY" = "REPLACE_OPENROUTER_API_KEY" ]; then
+    echo "ERROR: Set GROQ_API_KEY or OPENROUTER_API_KEY on Spec Agent node"
+    exit 1
+  fi
+  export LLM_PROVIDER="${LLM_PROVIDER:-openrouter}"
 fi
 
 WORKDIR="${WORKDIR:-/tmp/issueforge/$RANDOM}"

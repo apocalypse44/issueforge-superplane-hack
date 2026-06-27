@@ -10,7 +10,7 @@ Usage (use the project venv — do not use system python):
     python run_local.py --issue https://github.com/superplanehq/superplane/issues/5368 --full
     python run_local.py --all-eval
 
-Requires: Node.js/npm, git. LLM: Groq (GROQ_API_KEY) or Ollama (LLM_PROVIDER=ollama).
+Requires: Node.js/npm, git. LLM: OpenRouter (OPENROUTER_API_KEY) or Ollama (LLM_PROVIDER=ollama).
 For --issue: GITHUB_TOKEN (uses GitHub API if gh CLI is not installed).
 For --full: GITHUB_TOKEN, OUTPUT_REPO. Optional: RENDER_API_KEY, RENDER_SERVICE_ID.
 """
@@ -27,10 +27,6 @@ import time
 import urllib.error
 import urllib.request
 
-try:
-    from groq import Groq
-except ImportError:
-    Groq = None
 
 SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "scripts")
 PROMPTS_DIR = os.path.join(os.path.dirname(__file__), "prompts")
@@ -87,12 +83,13 @@ def call_ollama(system_prompt, user_message, max_tokens=8000, model=None):
         sys.exit(1)
 
 
-def call_groq_http(system_prompt, user_message, max_tokens=8000, model=None):
-    api_key = os.environ.get("GROQ_API_KEY")
-    if not api_key or api_key == "REPLACE_GROQ_API_KEY":
-        print("ERROR: GROQ_API_KEY not set (replace REPLACE_GROQ_API_KEY on Spec/Code Agent nodes)")
-        sys.exit(1)
-    model = model or os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+def _clean_secret(value):
+    if not value:
+        return value
+    return value.strip().strip('"').strip("'")
+
+
+def _openai_chat_http(url, api_key, model, system_prompt, user_message, max_tokens, extra_headers=None):
     payload = json.dumps({
         "model": model,
         "max_tokens": max_tokens,
@@ -101,63 +98,43 @@ def call_groq_http(system_prompt, user_message, max_tokens=8000, model=None):
             {"role": "user", "content": user_message},
         ],
     }).encode()
-    req = urllib.request.Request(
-        "https://api.groq.com/openai/v1/chat/completions",
-        data=payload,
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=300) as resp:
-            data = json.loads(resp.read())
-        return data["choices"][0]["message"]["content"]
-    except urllib.error.HTTPError as e:
-        detail = e.read().decode(errors="replace")
-        raise RuntimeError(f"Groq API failed ({e.code}): {detail}") from e
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    }
+    if extra_headers:
+        headers.update(extra_headers)
+    req = urllib.request.Request(url, data=payload, headers=headers, method="POST")
+    with urllib.request.urlopen(req, timeout=300) as resp:
+        data = json.loads(resp.read())
+    return data["choices"][0]["message"]["content"]
 
 
-def call_groq(system_prompt, user_message, max_tokens=8000, model=None):
-    if Groq is None:
-        return call_groq_http(system_prompt, user_message, max_tokens, model)
-    api_key = os.environ.get("GROQ_API_KEY")
-    if not api_key or api_key == "REPLACE_GROQ_API_KEY":
-        print("ERROR: GROQ_API_KEY not set (replace REPLACE_GROQ_API_KEY on Spec/Code Agent nodes)")
+def call_openrouter(system_prompt, user_message, max_tokens=8000, model=None):
+    api_key = _clean_secret(os.environ.get("OPENROUTER_API_KEY"))
+    if not api_key or api_key == "REPLACE_OPENROUTER_API_KEY":
+        print("ERROR: OPENROUTER_API_KEY not set (get one at openrouter.ai)")
         sys.exit(1)
-    client = Groq(api_key=api_key)
-    model = model or os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
-    try:
-        response = client.chat.completions.create(
-            model=model,
-            max_tokens=max_tokens,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message},
-            ],
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        if "413" in str(e) or "rate_limit" in str(e) or "too large" in str(e):
-            trimmed = user_message[:6000]
-            response = client.chat.completions.create(
-                model=model,
-                max_tokens=min(max_tokens, 6000),
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": trimmed},
-                ],
-            )
-            return response.choices[0].message.content
-        raise
+    model = model or os.environ.get("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free")
+    return _openai_chat_http(
+        "https://openrouter.ai/api/v1/chat/completions",
+        api_key,
+        model,
+        system_prompt,
+        user_message,
+        max_tokens,
+        extra_headers={
+            "HTTP-Referer": "https://github.com/apocalypse44/issueforge-superplane-hack",
+            "X-Title": "IssueForge",
+        },
+    )
 
 
 def call_llm(system_prompt, user_message, max_tokens=8000, model=None):
-    provider = os.environ.get("LLM_PROVIDER", "groq").lower()
+    provider = os.environ.get("LLM_PROVIDER", "openrouter").lower()
     if provider == "ollama":
         return call_ollama(system_prompt, user_message, max_tokens, model)
-    return call_groq(system_prompt, user_message, max_tokens, model)
+    return call_openrouter(system_prompt, user_message, max_tokens, model)
 
 
 def parse_issue_url(issue_url):
@@ -812,7 +789,7 @@ Implements [{source}]({source})
 
 def run_pipeline(idea, issue_info, full_deploy, max_retries, keep):
     load_env()
-    provider = os.environ.get("LLM_PROVIDER", "groq").lower()
+    provider = os.environ.get("LLM_PROVIDER", "openrouter").lower()
     print(f"LLM provider: {provider}")
 
     print("\n" + "#" * 60)

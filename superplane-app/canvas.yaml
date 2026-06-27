@@ -136,10 +136,14 @@ spec:
         environment_variables:
           - key: GROQ_API_KEY
             value: REPLACE_GROQ_API_KEY
+          - key: OPENROUTER_API_KEY
+            value: REPLACE_OPENROUTER_API_KEY
           - key: GROQ_MODEL
             value: '{{ "llama-3.3-70b-versatile" }}'
+          - key: OPENROUTER_MODEL
+            value: '{{ "meta-llama/llama-3.3-70b-instruct:free" }}'
           - key: LLM_PROVIDER
-            value: groq
+            value: openrouter
           - key: FILES_REPO
             value: '{{ "apocalypse44/issueforge-superplane-hack" }}'
           - key: GITHUB_TOKEN
@@ -252,10 +256,14 @@ spec:
         environment_variables:
           - key: GROQ_API_KEY
             value: REPLACE_GROQ_API_KEY
+          - key: OPENROUTER_API_KEY
+            value: REPLACE_OPENROUTER_API_KEY
           - key: GROQ_MODEL
             value: '{{ "llama-3.3-70b-versatile" }}'
+          - key: OPENROUTER_MODEL
+            value: '{{ "meta-llama/llama-3.3-70b-instruct:free" }}'
           - key: LLM_PROVIDER
-            value: groq
+            value: openrouter
           - key: FILES_REPO
             value: '{{ "apocalypse44/issueforge-superplane-hack" }}'
           - key: GITHUB_TOKEN

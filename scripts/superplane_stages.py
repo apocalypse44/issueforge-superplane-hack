@@ -83,8 +83,8 @@ def cmd_spec_agent(workdir, issue_text_file):
     with open(issue_text_file) as f:
         user_message = f.read()
     text = call_llm(system_prompt, user_message, max_tokens=3000)
-    model = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
-    return {"text": text, "model": model, "provider": os.environ.get("LLM_PROVIDER", "groq")}
+    model = os.environ.get("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free")
+    return {"text": text, "model": model, "provider": os.environ.get("LLM_PROVIDER", "openrouter")}
 
 
 def cmd_code_agent(workdir, spec_text_file):
@@ -95,8 +95,8 @@ def cmd_code_agent(workdir, spec_text_file):
         spec_text = f.read()
     user_message = f"Implement as a deployable React+Vite PoC.\n\n{spec_text}"
     text = call_llm(system_prompt, user_message, max_tokens=8000)
-    model = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
-    return {"text": text, "model": model, "provider": os.environ.get("LLM_PROVIDER", "groq")}
+    model = os.environ.get("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free")
+    return {"text": text, "model": model, "provider": os.environ.get("LLM_PROVIDER", "openrouter")}
 
 
 def cmd_validate(workdir, spec_text_file):
