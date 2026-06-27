@@ -51,11 +51,16 @@ def cmd_fetch(issue_url, workdir):
         json.dump(info, f, indent=2)
     with open(os.path.join(workdir, "idea.txt"), "w") as f:
         f.write(info["text"])
+    repo = info.get("repo") or ""
     return {
         "issue_url": issue_url,
         "issue_number": info["number"],
         "issue_title": info["title"],
         "issue_text": info["text"],
+        "repo_full_name": repo,
+        "repo_owner": repo.split("/")[0] if "/" in repo else "",
+        "repo_name": repo.split("/")[1] if "/" in repo else "",
+        "branch_name": f"issueforge/{info['number']}",
         "idea_file": f"{workdir}/idea.txt",
     }
 

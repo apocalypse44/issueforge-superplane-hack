@@ -3,6 +3,8 @@
 
 issue_url_from_payload() {
   jq -r '
+    (.["Submit Issue"]? | .data.issue_url?) //
+    (.["Submit Issue"]? | .data[0].issue_url?) //
     (.["Issue Webhook"]? | .data.body.issue_url?) //
     (.["Issue Webhook"]? | .data.body.issueUrl?) //
     (.["Issue Webhook"]? | .data[0].body.issue_url?) //
